@@ -59,7 +59,7 @@
         <div class="p-10">
             <div class="flex justify-between lg:flex-row md:flex-row flex-col gap-3 items-center mb-7">
                 <p class="text-2xl font-bold">Latest Products</p>
-                <a href="{{ route('front.all-products') }}"
+                <a href="{{ route('front.products') }}"
                     class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm">Show
                     all products</a>
             </div>

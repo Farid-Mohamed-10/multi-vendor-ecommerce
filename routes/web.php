@@ -14,9 +14,9 @@ Route::name('front.')->group(function () {
     Route::get('/all-categories', [CategoryController::class, 'showAllCategories'])->name('all-categories');
 
     // PRODUCTS
-    Route::get('/all-products', [ProductController::class, 'showAllProducts'])->name('all-products');
+    Route::get('/products', [ProductController::class, 'showAllProducts'])->name('products');
     Route::get('/show-product/{product:slug}', [ProductController::class, 'showProduct'])->name('show-product');
-});
+    });
 
 // ADMIN DASHBOARD
 Route::name('admin-dashboard.')->prefix('/admin-dashboard')->middleware([

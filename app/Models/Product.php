@@ -38,4 +38,11 @@ class Product extends Model
     {
         return $this->hasMany(Stock::class);
     }
+
+    public function stockFor(string $size, string $color)
+    {
+        return $this->stocks()
+            ->where('size', $size)
+            ->where('color', $color);
+    }
 }

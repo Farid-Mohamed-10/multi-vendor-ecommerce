@@ -19,7 +19,7 @@
                     </div>
 
                     {{-- Search Bar --}}
-                    <form method="GET" action="{{ route('front.all-products') }}"
+                    <form method="GET" action="{{ route('front.products') }}"
                         class="flex items-center gap-2 w-full sm:w-auto">
                         <div class="relative flex-1 sm:w-72">
                             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
@@ -45,7 +45,7 @@
 
                 {{-- ======= SIDEBAR FILTERS ======= --}}
                 <aside class="hidden lg:block w-64 flex-shrink-0">
-                    <form method="GET" action="{{ route('front.all-products') }}" id="filter-form">
+                    <form method="GET" action="{{ route('front.products') }}" id="filter-form">
 
                         {{-- Categories --}}
                         <div class="bg-white rounded-xl border border-gray-200 p-5 mb-4">
@@ -112,7 +112,7 @@
                         </div>
 
                         {{-- Size Filter --}}
-                        <div class="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+                        <div class="bg-white rounded-xl border border-gray-200 p-5 my-4">
                             <h3 class="text-sm font-semibold text-gray-900 mb-3">Size</h3>
                             <div class="space-y-2">
                                 <label class="flex items-center gap-2.5 cursor-pointer group">
@@ -144,7 +144,7 @@
 
                     {{-- Clear Filters --}}
                     @if (request()->hasAny(['category', 'size', 'min_price', 'max_price', 'sort', 'search']))
-                        <a href="{{ route('front.all-products') }}"
+                        <a href="{{ route('front.products') }}"
                             class="mt-3 w-full flex items-center justify-center gap-1.5 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -200,7 +200,7 @@
                             </div>
                             <h3 class="text-base font-semibold text-gray-900 mb-1">No products found</h3>
                             <p class="text-sm text-gray-500 mb-4">Try adjusting your search or filters.</p>
-                            <a href="{{ route('front.all-products') }}"
+                            <a href="{{ route('front.products') }}"
                                 class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors">
                                 Clear filters
                             </a>
