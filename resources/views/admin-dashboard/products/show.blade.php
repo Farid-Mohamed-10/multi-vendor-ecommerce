@@ -38,7 +38,19 @@
                             <h2 class="text-xl font-bold text-gray-800 mb-2">{{ $product->name }}</h2>
                             <p class="text-sm text-gray-500 mb-4">{{ $product->category?->name }}</p>
                             <p class="text-sm text-gray-600 mb-4">{{ $product->description }}</p>
-                            <span class="text-2xl font-bold text-gray-800">${{ number_format($product->price, 2) }}</span>
+
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Price</p>
+                                    <span
+                                        class="text-2xl font-bold text-gray-800">${{ number_format($product->price, 2) }}</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Original Price</p>
+                                    <span
+                                        class="text-2xl font-bold text-gray-800">${{ number_format($product->original_price, 2) }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

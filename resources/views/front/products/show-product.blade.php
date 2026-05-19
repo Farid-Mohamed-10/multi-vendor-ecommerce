@@ -11,6 +11,7 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
+
                 @if ($product->category)
                     <a href="{{ route('front.products', ['category' => $product->category->id]) }}"
                         class="hover:text-indigo-600 transition-colors">{{ $product->category->name }}</a>
@@ -18,10 +19,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 @endif
+
                 <span class="text-gray-900 font-medium truncate max-w-xs">{{ $product->name }}</span>
             </nav>
 
-            {{-- Main Product Section --}}
             <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
 
@@ -41,33 +42,11 @@
                                     </svg>
                                 </div>
                             @endif
-
-                            @if ($product->old_price && $product->old_price > $product->price)
-                                @php $discount = round((($product->old_price - $product->price) / $product->old_price) * 100); @endphp
-                                <div
-                                    class="absolute top-3 left-3 px-2.5 py-1 bg-red-500 text-white text-xs font-bold rounded-lg">
-                                    {{ $discount }}% OFF
-                                </div>
-                            @endif
                         </div>
-
-                        @if (isset($product->images) && $product->images->count() > 1)
-                            <div class="flex gap-3 overflow-x-auto pb-1">
-                                @foreach ($product->images as $image)
-                                    <button
-                                        onclick="document.getElementById('main-image').src='{{ asset('storage/' . $image->path) }}'"
-                                        class="flex-shrink-0 w-16 h-16 rounded-lg border-2 border-gray-200 hover:border-indigo-500 overflow-hidden transition-colors duration-150">
-                                        <img src="{{ asset('storage/' . $image->path) }}" alt=""
-                                            class="w-full h-full object-cover" />
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
                     </div>
 
                     {{-- RIGHT: Product Info --}}
                     <div class="p-6 lg:p-8">
-
                         @if ($product->category)
                             <span
                                 class="inline-block px-3 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-full mb-3">
@@ -79,29 +58,17 @@
                             {{ $product->name }}
                         </h1>
 
-                        {{-- Price --}}
                         <div class="flex items-baseline gap-3 mb-1">
-                            <span class="text-3xl font-bold text-gray-900">
-                                ${{ number_format($product->price, 2) }}
-                            </span>
+                            <span class="text-3xl font-bold text-gray-900">${{ number_format($product->price, 2) }}</span>
                         </div>
                         <p class="text-xs text-gray-500 mb-5">Inclusive of all taxes</p>
 
                         <div class="border-t border-gray-100 my-5"></div>
 
-                        {{-- Seller --}}
-                        @if ($product->user)
-                            <div class="mb-5">
-                                <p class="text-sm text-gray-500">Sold by</p>
-                                <p class="text-sm font-semibold text-indigo-600 mt-0.5">{{ $product->user->name }}</p>
-                            </div>
-                        @endif
+                        @php $totalStock = $product->stocks->sum('quantity'); @endphp
 
                         {{-- Stock Status --}}
                         <div class="mb-5">
-                            @php
-                                $totalStock = $product->stocks->sum('quantity');
-                            @endphp
                             @if ($totalStock > 0)
                                 <span class="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
                                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
@@ -118,190 +85,216 @@
                             @endif
                         </div>
 
-                        {{-- Quantity and Size/Color Selection --}}
-                        @php
-                            $totalStock = $product->stocks->sum('quantity');
-                        @endphp
                         @if ($totalStock > 0)
-                            {{-- Size/Color Selection --}}
-                            @if ($product->stocks->count() > 0)
-                                <div class="mb-6">
-                                    <p class="text-sm font-semibold text-gray-700 mb-3">Available Options</p>
-                                    <div class="grid grid-cols-2 gap-2 mb-4">
-                                        @foreach ($product->stocks->unique('size') as $stock)
-                                            <label
-                                                class="flex items-center gap-2.5 cursor-pointer p-2 border border-gray-200 rounded-lg hover:border-indigo-500 transition-colors">
-                                                <input type="radio" name="stock_id" value="{{ $stock->id }}"
-                                                    {{ $loop->first ? 'checked' : '' }} class="w-4 h-4 text-indigo-600" />
-                                                <div>
-                                                    <p class="text-sm font-medium text-gray-700">{{ $stock->size }}</p>
-                                                    <p class="text-xs text-gray-500">{{ $stock->color }}</p>
-                                                </div>
-                                            </label>
+                            @if (! auth()->check() || ! auth()->user()->hasRole('seller'))
+                            <form action="{{ route('front.cart.add') }}" method="POST" id="addToCartForm">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <input type="hidden" name="stock_id" id="stock_id" value="">
+                                <input type="hidden" name="buy_now" id="buy_now" value="0">
+
+                                {{-- SIZE BUTTONS --}}
+                                <div class="mb-5">
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Size</p>
+                                    <div id="sizesWrap" class="flex flex-wrap gap-2">
+                                        @foreach ($sizes as $size)
+                                            <button type="button"
+                                                class="size-btn px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium hover:border-indigo-500 hover:bg-indigo-50 transition"
+                                                data-size="{{ $size }}">
+                                                {{ $size }}
+                                            </button>
                                         @endforeach
                                     </div>
+                                    <p id="sizeHint" class="mt-2 text-sm text-gray-500">Choose a size first.</p>
                                 </div>
-                            @endif
 
-                            {{-- Quantity --}}
-                            <div class="mb-6">
-                                <p class="text-sm font-semibold text-gray-700 mb-2">Quantity</p>
-                                <div class="flex items-center">
-                                    <button onclick="changeQty(-1)"
-                                        class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l-lg text-gray-600 hover:bg-gray-50 transition-colors font-medium text-lg">
-                                        −
-                                    </button>
-                                    <input id="qty-input" type="number" value="1" min="1"
-                                        max="{{ $totalStock }}"
-                                        class="w-14 h-10 text-center border-y border-gray-300 text-sm font-semibold focus:outline-none"
-                                        readonly />
-                                    <button onclick="changeQty(1)"
-                                        class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-r-lg text-gray-600 hover:bg-gray-50 transition-colors font-medium text-lg">
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-
-                            {{-- CTA Buttons --}}
-                            <div class="grid grid-cols-2 gap-3 mb-3">
-                                <button type="button" onclick="addToCart()"
-                                    class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors duration-150">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                    Add to Cart
-                                </button>
-
-                                <a href="#"
-                                    class="flex items-center justify-center gap-2 py-3 px-4 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold rounded-xl transition-colors duration-150">
-                                    Buy Now
-                                </a>
-                            </div>
-
-                            {{-- Secondary Actions --}}
-                            <div class="grid grid-cols-2 gap-3 mb-6">
-                                <button
-                                    class="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-sm font-medium text-gray-700 rounded-xl transition-colors duration-150">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                    Wishlist
-                                </button>
-                                <!-- Share Button -->
-                                <button type="button" id="openShare"
-                                    class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-center font-medium text-gray-900 shadow-sm hover:bg-gray-50">
-                                    <!-- icon (optional) -->
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24"
-                                        fill="currentColor">
-                                        <path
-                                            d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.27 3.27 0 0 0 0-1.39l7-4.11A2.99 2.99 0 1 0 14 5a2.9 2.9 0 0 0 .04.49l-7 4.11a3 3 0 1 0 0 4.8l7.12 4.17c-.02.14-.04.28-.04.43a3 3 0 1 0 3-3Z" />
-                                    </svg>
-                                    Share
-                                </button>
-
-                                <!-- Modal Backdrop -->
-                                <div id="shareModal" class="fixed inset-0 z-50 hidden items-center justify-center"
-                                    aria-hidden="true">
-                                    <!-- overlay -->
-                                    <div id="shareOverlay" class="absolute inset-0 bg-black/50"></div>
-
-                                    <!-- modal -->
-                                    <div class="relative w-[92%] max-w-md rounded-2xl bg-white p-5 shadow-xl">
-                                        <div class="flex items-start justify-between gap-4">
-                                            <div>
-                                                <h3 class="text-lg font-semibold text-gray-900">Share this page</h3>
-                                                <p class="mt-1 text-sm text-gray-500">Choose where to share the link</p>
-                                            </div>
-
-                                            <button type="button" id="closeShare"
-                                                class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                                                aria-label="Close">
-                                                ✕
+                                {{-- COLOR CIRCLES --}}
+                                <div class="mb-5">
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Color</p>
+                                    <div id="colorsWrap" class="flex flex-wrap gap-2">
+                                        @foreach ($colors as $color)
+                                            <button type="button"
+                                                class="color-btn w-10 h-10 rounded-full border border-gray-200 shadow-sm hover:scale-105 transition relative"
+                                                data-color="{{ $color }}" title="{{ $color }}">
+                                                <span class="absolute inset-1 rounded-full"
+                                                    style="background-color: {{ $color }};"></span>
                                             </button>
-                                        </div>
+                                        @endforeach
+                                    </div>
+                                    <p id="colorHint" class="mt-2 text-sm text-gray-500">Pick a color.</p>
+                                </div>
 
-                                        <!-- Share buttons grid -->
-                                        <div class="mt-5 grid grid-cols-2 gap-3">
-                                            <a id="shareWhatsapp" target="_blank" rel="noopener"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                WhatsApp
-                                            </a>
-                                            <a id="shareTelegram" target="_blank" rel="noopener"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                Telegram
-                                            </a>
-                                            <a id="shareFacebook" target="_blank" rel="noopener"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                Facebook
-                                            </a>
-                                            <a id="shareX" target="_blank" rel="noopener"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                X (Twitter)
-                                            </a>
-                                            <a id="shareLinkedIn" target="_blank" rel="noopener"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                LinkedIn
-                                            </a>
-                                            <a id="shareEmail"
-                                                class="flex items-center justify-center rounded-xl border border-gray-200 px-3 py-3 text-sm font-medium hover:bg-gray-50">
-                                                Email
-                                            </a>
-                                        </div>
+                                {{-- STOCK INFO --}}
+                                <div id="stockInfo"
+                                    class="mb-5 hidden rounded-xl bg-gray-50 p-3 text-sm text-gray-700 border border-gray-200">
+                                </div>
 
-                                        <!-- Copy link -->
-                                        <div class="mt-4">
-                                            <div class="flex gap-2">
-                                                <input id="shareUrl"
-                                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                                                    readonly />
-                                                <button type="button" id="copyShare"
-                                                    class="shrink-0 rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
-                                                    Copy
-                                                </button>
-                                            </div>
+                                @error('stock_id')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                                @error('qty')
+                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
 
-                                            <p id="copyToast" class="mt-2 hidden text-sm text-green-600">Copied!</p>
-                                        </div>
+                                @if (session('success'))
+                                    <div class="mt-3 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+                                        {{ session('success') }}</div>
+                                @endif
+                                @if (session('error'))
+                                    <div class="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{{ session('error') }}
+                                    </div>
+                                @endif
+
+                                {{-- QUANTITY --}}
+                                <div class="mb-6">
+                                    <p class="text-sm font-semibold text-gray-700 mb-2">Quantity</p>
+                                    <div class="flex items-center">
+                                        <button type="button" onclick="changeQty(-1)"
+                                            class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-l-lg text-gray-600 hover:bg-gray-50 transition-colors font-medium text-lg">−</button>
+
+                                        <input id="qty-input" name="qty" type="number" value="1" min="1"
+                                            max="1"
+                                            class="w-14 h-10 text-center border-y border-gray-300 text-sm font-semibold focus:outline-none"
+                                            readonly />
+
+                                        <button type="button" onclick="changeQty(1)"
+                                            class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-r-lg text-gray-600 hover:bg-gray-50 transition-colors font-medium text-lg">+</button>
                                     </div>
                                 </div>
-                            </div>
+
+                                {{-- BUTTONS --}}
+                                <div class="grid grid-cols-2 gap-3 mb-6">
+                                    <button type="submit" id="addBtn"
+                                        class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                        disabled>
+                                        Add to Cart
+                                    </button>
+
+                                    <button type="button" id="buyNowBtn"
+                                        class="w-full py-3 px-4 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold rounded-xl transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                        disabled>
+                                        Buy Now
+                                    </button>
+                                </div>
+                            </form>
+                            @else
+                                <div class="mb-6 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-800 text-sm">
+                                    As a seller, you cannot purchase items or add them to your cart.
+                                </div>
+                            @endif
                         @endif
 
-                        {{-- Perks --}}
-                        <div class="space-y-3 border-t border-gray-100 pt-5">
-                            <div class="flex items-start gap-3">
-                                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.25 9h11.5L19 8" />
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800">Free Delivery on orders above $50</p>
-                                    <p class="text-xs text-gray-500">Delivery in 3-5 business days</p>
+                        {{-- Secondary Actions --}}
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            @auth
+                                @php
+                                    $isWishlisted = \App\Models\Wishlist::where('user_id', auth()->id())
+                                        ->where('product_id', $product->id)
+                                        ->exists();
+                                @endphp
+                                <form action="{{ route('wishlist.toggle', $product) }}" method="POST">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 border {{ $isWishlisted ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700' }} text-sm font-medium rounded-xl transition">
+                                        <svg class="w-4 h-4" fill="{{ $isWishlisted ? 'currentColor' : 'none' }}"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                        </svg>
+                                        {{ $isWishlisted ? 'Wishlisted' : 'Wishlist' }}
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}"
+                                    class="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-sm font-medium text-gray-700 rounded-xl transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                                    </svg>
+                                    Wishlist
+                                </a>
+                            @endauth
+
+                            <button type="button" id="openShare"
+                                class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-center font-medium text-gray-900 shadow-sm hover:bg-gray-50">
+                                Share
+                            </button>
+                        </div>
+
+                        <div id="shareModal"
+                            class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/55 px-4">
+                            <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-sky-600">Share
+                                        </p>
+                                        <h3 class="mt-2 text-2xl font-bold text-slate-900">Share this product</h3>
+                                        <p class="mt-2 text-sm text-slate-500">Send this product to your favorite app or
+                                            copy the link.</p>
+                                    </div>
+                                    <button type="button" id="closeShare"
+                                        class="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                                        aria-label="Close share dialog">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800">7 Days Easy Return</p>
-                                    <p class="text-xs text-gray-500">Return if not satisfied</p>
+
+                                <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    <a id="shareWhatsapp" href="#" target="_blank" rel="noopener noreferrer"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-green-200 hover:bg-green-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100 text-green-600">WA</span>
+                                        WhatsApp
+                                    </a>
+                                    <a id="shareFacebook" href="#" target="_blank" rel="noopener noreferrer"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-600">f</span>
+                                        Facebook
+                                    </a>
+                                    <a id="shareTelegram" href="#" target="_blank" rel="noopener noreferrer"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-sky-600">TG</span>
+                                        Telegram
+                                    </a>
+                                    <a id="shareTwitter" href="#" target="_blank" rel="noopener noreferrer"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-700">X</span>
+                                        X
+                                    </a>
+                                    <a id="shareEmail" href="#"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-amber-200 hover:bg-amber-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600">@</span>
+                                        Email
+                                    </a>
+                                    <button type="button" id="copyShareLink"
+                                        class="flex flex-col items-center rounded-2xl border border-slate-200 px-4 py-4 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50">
+                                        <span
+                                            class="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-violet-100 text-violet-600">⧉</span>
+                                        Copy Link
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <svg class="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800">100% Authentic Product</p>
-                                    <p class="text-xs text-gray-500">Verified & quality checked</p>
+
+                                <div class="mt-5 rounded-2xl bg-slate-50 p-3">
+                                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Link
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <input id="shareProductUrl" type="text" readonly
+                                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 outline-none"
+                                            value="{{ route('front.show-product', $product) }}">
+                                        <button type="button" id="nativeShare"
+                                            class="rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700">
+                                            More
+                                        </button>
+                                    </div>
+                                    <p id="shareFeedback" class="mt-2 hidden text-sm font-medium text-green-600">Link
+                                        copied.</p>
                                 </div>
                             </div>
                         </div>
@@ -310,152 +303,295 @@
                 </div>
             </div>
 
-            {{-- Product Description --}}
-            @if ($product->description)
-                <div class="mt-6 bg-white rounded-2xl border border-gray-200 p-6 lg:p-8">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Product Description</h2>
-                    <div class="prose prose-sm max-w-none text-gray-600 leading-relaxed">
-                        {!! nl2br(e($product->description)) !!}
-                    </div>
-                </div>
-            @endif
-
-            {{-- Related Products --}}
-            @if (isset($relatedProducts) && $relatedProducts->count() > 0)
-                <div class="mt-6">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Related Products</h2>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        @foreach ($relatedProducts as $related)
-                            <a href="{{ route('front.show-product', $related->slug) }}"
-                                class="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all duration-200">
-                                <div class="aspect-square bg-gray-50 overflow-hidden">
-                                    @if ($related->image)
-                                        <img src="{{ asset('storage/' . $related->image) }}" alt="{{ $related->name }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                    @else
-                                        <div class="w-full h-full flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="p-3">
-                                    <p
-                                        class="text-sm font-medium text-gray-800 group-hover:text-indigo-600 line-clamp-2 mb-1 transition-colors">
-                                        {{ $related->name }}
-                                    </p>
-                                    <p class="text-sm font-bold text-gray-900">${{ number_format($related->price, 2) }}
-                                    </p>
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-
         </div>
     </div>
 
     <script>
         function changeQty(delta) {
             const input = document.getElementById('qty-input');
-            const max = parseInt(input.max);
-            let val = parseInt(input.value) + delta;
+            const max = parseInt(input.max || '1', 10);
+            let val = parseInt(input.value || '1', 10) + delta;
             if (val < 1) val = 1;
             if (val > max) val = max;
             input.value = val;
         }
 
-        function addToCart() {
-            const stockId = document.querySelector('input[name="stock_id"]:checked')?.value;
-            const quantity = document.getElementById('qty-input')?.value || 1;
-            if (!stockId) {
-                alert('Please select a size');
-                return;
-            }
-            // TODO: Implement cart add logic (e.g., AJAX request or form submission)
-            console.log('Add to cart:', {
-                stockId,
-                quantity
-            });
-        }
-
-        // For share button
         (() => {
-            const modal = document.getElementById('shareModal');
-            const openBtn = document.getElementById('openShare');
-            const closeBtn = document.getElementById('closeShare');
-            const overlay = document.getElementById('shareOverlay');
+            const stockMap = @json($stockMap);
+            const colorImages = @json($colorImages ?? []); // ✅ اختياري
+            const defaultImage = @json($product->image ? asset('storage/' . $product->image) : null);
 
-            const inputUrl = document.getElementById('shareUrl');
-            const copyBtn = document.getElementById('copyShare');
-            const toast = document.getElementById('copyToast');
+            const sizeBtns = Array.from(document.querySelectorAll('.size-btn'));
+            const colorBtns = Array.from(document.querySelectorAll('.color-btn'));
 
-            // Use current page
-            const rawUrl = window.location.href;
-            const pageUrl = encodeURIComponent(rawUrl);
-            const title = encodeURIComponent(document.title);
+            const stockIdInput = document.getElementById('stock_id');
+            const qtyInput = document.getElementById('qty-input');
+            const stockInfo = document.getElementById('stockInfo');
 
-            inputUrl.value = rawUrl;
+            const addBtn = document.getElementById('addBtn');
+            const buyNowBtn = document.getElementById('buyNowBtn');
+            const buyNowInput = document.getElementById('buy_now');
+            const form = document.getElementById('addToCartForm');
 
-            // Share links
-            document.getElementById('shareWhatsapp').href =
-                `https://wa.me/?text=${title}%20${pageUrl}`;
+            const sizeHint = document.getElementById('sizeHint');
+            const colorHint = document.getElementById('colorHint');
 
-            document.getElementById('shareTelegram').href =
-                `https://t.me/share/url?url=${pageUrl}&text=${title}`;
+            let selectedSize = '';
+            let selectedColor = '';
 
+            function normalize(v) {
+                return (v ?? '').toString().trim().toLowerCase();
+            }
+
+            function setMainImageByColor(color) {
+                const img = document.getElementById('main-image');
+                if (!img) return;
+
+                // لو عندك صورة للون
+                const direct = colorImages[color] || colorImages[normalize(color)];
+                if (direct) {
+                    img.src = direct;
+                    return;
+                }
+
+                // fallback
+                if (defaultImage) img.src = defaultImage;
+            }
+
+            function resetStockUI(message = '') {
+                stockIdInput.value = '';
+                qtyInput.value = 1;
+                qtyInput.max = 1;
+
+                addBtn.disabled = true;
+                buyNowBtn.disabled = true;
+
+                if (message) {
+                    stockInfo.textContent = message;
+                    stockInfo.classList.remove('hidden');
+                } else {
+                    stockInfo.classList.add('hidden');
+                    stockInfo.textContent = '';
+                }
+            }
+
+            function updateColorAvailability() {
+                // فعّل/اقفل الألوان حسب المقاس المختار
+                const availableColors = new Set(
+                    stockMap
+                    .filter(s => normalize(s.size) === normalize(selectedSize) && Number(s.qty) > 0)
+                    .map(s => normalize(s.color))
+                );
+
+                colorBtns.forEach(btn => {
+                    const c = normalize(btn.dataset.color);
+                    const ok = selectedSize && availableColors.has(c);
+
+                    btn.disabled = !ok;
+                    btn.classList.toggle('opacity-40', !ok);
+                    btn.classList.toggle('cursor-not-allowed', !ok);
+
+                    // لو اللون المختار بقى غير متاح بعد تغيير المقاس
+                    if (!ok && normalize(selectedColor) === c) {
+                        selectedColor = '';
+                        btn.classList.remove('ring-2', 'ring-indigo-600', 'ring-offset-2');
+                    }
+                });
+
+                if (!selectedSize) {
+                    colorHint.textContent = 'Choose size first.';
+                } else if (availableColors.size === 0) {
+                    colorHint.textContent = 'No colors available for this size.';
+                } else {
+                    colorHint.textContent = 'Pick a color.';
+                }
+            }
+
+            function updateStock() {
+                resetStockUI();
+
+                if (!selectedSize) {
+                    sizeHint.textContent = 'Choose a size first.';
+                    updateColorAvailability();
+                    return;
+                }
+
+                sizeHint.textContent = `Selected: ${selectedSize}`;
+                updateColorAvailability();
+
+                if (!selectedColor) {
+                    resetStockUI('Now select a color.');
+                    return;
+                }
+
+                const match = stockMap.find(s =>
+                    normalize(s.size) === normalize(selectedSize) &&
+                    normalize(s.color) === normalize(selectedColor) &&
+                    Number(s.qty) > 0
+                );
+
+                if (!match) {
+                    resetStockUI('This option is out of stock.');
+                    return;
+                }
+
+                stockIdInput.value = match.id;
+                qtyInput.max = match.qty;
+                qtyInput.value = 1;
+
+                addBtn.disabled = false;
+                buyNowBtn.disabled = false;
+
+                stockInfo.textContent = `Available: ${match.qty}`;
+                stockInfo.classList.remove('hidden');
+            }
+
+            // size buttons
+            sizeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedSize = btn.dataset.size;
+
+                    // style
+                    sizeBtns.forEach(b => b.classList.remove('border-indigo-500', 'bg-indigo-50'));
+                    btn.classList.add('border-indigo-500', 'bg-indigo-50');
+
+                    updateStock();
+                });
+            });
+
+            // color circles
+            colorBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.disabled) return;
+
+                    selectedColor = btn.dataset.color;
+
+                    colorBtns.forEach(b => b.classList.remove('ring-2', 'ring-indigo-600',
+                        'ring-offset-2'));
+                    btn.classList.add('ring-2', 'ring-indigo-600', 'ring-offset-2');
+
+                    setMainImageByColor(selectedColor);
+                    updateStock();
+                });
+            });
+
+            // Buy now
+            buyNowBtn.addEventListener('click', () => {
+                if (!stockIdInput.value) {
+                    resetStockUI('Please choose Size & Color first.');
+                    return;
+                }
+                buyNowInput.value = '1';
+                form.submit();
+            });
+
+            // Add to cart submit guard
+            form.addEventListener('submit', (e) => {
+                if (!stockIdInput.value) {
+                    e.preventDefault();
+                    resetStockUI('Please choose Size & Color first.');
+                } else {
+                    buyNowInput.value = '0';
+                }
+            });
+
+            // init
+            resetStockUI('Choose a size, then pick a color.');
+            updateColorAvailability();
+        })();
+
+        (() => {
+            const openShare = document.getElementById('openShare');
+            const closeShare = document.getElementById('closeShare');
+            const shareModal = document.getElementById('shareModal');
+            const shareFeedback = document.getElementById('shareFeedback');
+            const shareInput = document.getElementById('shareProductUrl');
+            const nativeShare = document.getElementById('nativeShare');
+
+            if (!openShare || !shareModal || !shareInput) return;
+
+            const shareUrl = shareInput.value;
+            const shareTitle = @json($product->name);
+            const shareText = @json('Check out this product on ALOSTORA: ' . $product->name);
+            const encodedUrl = encodeURIComponent(shareUrl);
+            const encodedText = encodeURIComponent(`${shareText} ${shareUrl}`);
+            const encodedTitle = encodeURIComponent(shareTitle);
+
+            document.getElementById('shareWhatsapp').href = `https://wa.me/?text=${encodedText}`;
             document.getElementById('shareFacebook').href =
-                `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`;
-
-            document.getElementById('shareX').href =
-                `https://twitter.com/intent/tweet?url=${pageUrl}&text=${title}`;
-
-            document.getElementById('shareLinkedIn').href =
-                `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`;
-
+                `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+            document.getElementById('shareTelegram').href =
+                `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(shareText)}`;
+            document.getElementById('shareTwitter').href =
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodedUrl}`;
             document.getElementById('shareEmail').href =
-                `mailto:?subject=${title}&body=${title}%0A${pageUrl}`;
+                `mailto:?subject=${encodedTitle}&body=${encodedText}`;
+
+            function hideFeedback() {
+                shareFeedback.classList.add('hidden');
+            }
+
+            function showFeedback(message) {
+                shareFeedback.textContent = message;
+                shareFeedback.classList.remove('hidden');
+            }
 
             function openModal() {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                modal.setAttribute('aria-hidden', 'false');
-                document.body.classList.add('overflow-hidden'); // prevent background scroll
+                shareModal.classList.remove('hidden');
+                shareModal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+                hideFeedback();
             }
 
             function closeModal() {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                modal.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('overflow-hidden');
-                toast.classList.add('hidden');
+                shareModal.classList.add('hidden');
+                shareModal.classList.remove('flex');
+                document.body.style.overflow = '';
             }
 
-            openBtn.addEventListener('click', openModal);
-            closeBtn.addEventListener('click', closeModal);
-            overlay.addEventListener('click', closeModal);
+            openShare.addEventListener('click', openModal);
+            closeShare?.addEventListener('click', closeModal);
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModal();
-            });
-
-            copyBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(rawUrl);
-                } catch {
-                    // fallback
-                    inputUrl.select();
-                    document.execCommand('copy');
-                    window.getSelection()?.removeAllRanges();
+            shareModal.addEventListener('click', (event) => {
+                if (event.target === shareModal) {
+                    closeModal();
                 }
-                toast.classList.remove('hidden');
-                setTimeout(() => toast.classList.add('hidden'), 1200);
             });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !shareModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+
+            document.getElementById('copyShareLink')?.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    showFeedback('Link copied.');
+                } catch (error) {
+                    shareInput.select();
+                    document.execCommand('copy');
+                    showFeedback('Link copied.');
+                }
+            });
+
+            if (navigator.share) {
+                nativeShare?.addEventListener('click', async () => {
+                    try {
+                        await navigator.share({
+                            title: shareTitle,
+                            text: shareText,
+                            url: shareUrl,
+                        });
+                    } catch (error) {
+                        if (error?.name !== 'AbortError') {
+                            showFeedback('Unable to open the device share sheet.');
+                        }
+                    }
+                });
+            } else if (nativeShare) {
+                nativeShare.classList.add('hidden');
+            }
         })();
     </script>
-
 @endsection

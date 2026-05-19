@@ -24,7 +24,8 @@ class UpdateProductRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'price' => 'required|numeric|min:0.01',
+            'original_price' => 'required|numeric|min:0.01',
+            'price' => 'nullable|numeric|min:0.01',
             'category_id' => 'required|integer|exists:categories,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
 
@@ -38,11 +39,12 @@ class UpdateProductRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name' => __('keywords.name'),
-            'description' => __('keywords.description'),
-            'price' => __('keywords.price'),
-            'category_id' => __('keywords.category'),
-            'image' => __('keywords.image'),
+            'name' => 'Name',
+            'description' => 'Description',
+            'original_price' => 'Original Price',
+            'price' => 'Price',
+            'category_id' => 'Category',
+            'image' => 'Image',
         ];
     }
 }

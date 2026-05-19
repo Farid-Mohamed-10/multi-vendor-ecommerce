@@ -15,82 +15,93 @@ use Spatie\Sluggable\SlugOptions;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
+  use HasApiTokens;
 
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory;
+  /** @use HasFactory<\Database\Factories\UserFactory> */
+  use HasFactory;
 
-    use HasProfilePhoto;
-    use HasRoles;
-    use HasSlug;
-    use Notifiable;
-    use TwoFactorAuthenticatable;
+  use HasProfilePhoto;
+  use HasRoles;
+  use HasSlug;
+  use Notifiable;
+  use TwoFactorAuthenticatable;
 
-    public function getSlugOptions(): SlugOptions
-    {
-        return SlugOptions::create()
-            ->generateSlugsFrom('name')
-            ->saveSlugsTo('slug');
-    }
+  public function getSlugOptions(): SlugOptions
+  {
+    return SlugOptions::create()
+      ->generateSlugsFrom('name')
+      ->saveSlugsTo('slug');
+  }
 
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
+  public function getRouteKeyName()
+  {
+    return 'slug';
+  }
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
+  /**
+   * The attributes that are mass assignable.
+   *
+   * @var array<int, string>
+   */
+  protected $fillable = [
+    'name',
+    'email',
+    'password',
+    'phone',
+    'profile_photo_path',
+  ];
+
+  /**
+   * The attributes that should be hidden for serialization.
+   *
+   * @var array<int, string>
+   */
+  protected $hidden = [
+    'password',
+    'remember_token',
+    'two_factor_recovery_codes',
+    'two_factor_secret',
+  ];
+
+  /**
+   * The accessors to append to the model's array form.
+   *
+   * @var array<int, string>
+   */
+  protected $appends = [
+    'profile_photo_url',
+  ];
+
+  /**
+   * Get the attributes that should be cast.
+   *
+   * @return array<string, string>
+   */
+  protected function casts(): array
+  {
+    return [
+      'email_verified_at' => 'datetime',
+      'password' => 'hashed',
     ];
+  }
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-        'two_factor_recovery_codes',
-        'two_factor_secret',
-    ];
+  public function categories()
+  {
+    return $this->hasMany(Category::class);
+  }
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array<int, string>
-     */
-    protected $appends = [
-        'profile_photo_url',
-    ];
+  public function products()
+  {
+    return $this->hasMany(Product::class);
+  }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+  public function orders()
+  {
+    return $this->hasMany(Order::class);
+  }
 
-    public function categories()
-    {
-        return $this->hasMany(Category::class);
-    }
-
-    public function products()
-    {
-        return $this->hasMany(Product::class);
-    }
+  public function wishlists()
+  {
+    return $this->hasMany(Wishlist::class);
+  }
 }

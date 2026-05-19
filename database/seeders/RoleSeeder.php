@@ -32,6 +32,7 @@ class RoleSeeder extends Seeder
         $adminUser = User::firstOrNew(['email' => 'fm221210@gmail.com']);
         $adminUser->fill([
             'name' => 'Farid Mohamed',
+            'slug' => 'farid-mohamed',
             'email' => 'fm221210@gmail.com',
             'password' => Hash::make('123456789'),
             'phone' => '01029911289',

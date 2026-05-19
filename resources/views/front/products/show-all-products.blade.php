@@ -112,7 +112,7 @@
                         </div>
 
                         {{-- Size Filter --}}
-                        <div class="bg-white rounded-xl border border-gray-200 p-5 my-4">
+                        {{-- <div class="bg-white rounded-xl border border-gray-200 p-5 my-4">
                             <h3 class="text-sm font-semibold text-gray-900 mb-3">Size</h3>
                             <div class="space-y-2">
                                 <label class="flex items-center gap-2.5 cursor-pointer group">
@@ -133,7 +133,7 @@
                                     </label>
                                 @endforeach
                             </div>
-                        </div>
+                        </div> --}}
 
                         {{-- Preserve search across filters --}}
                         @if (request('search'))

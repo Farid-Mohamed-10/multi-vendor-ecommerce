@@ -85,9 +85,18 @@
 
                     {{-- Pricing --}}
                     <div class="bg-white rounded-2xl p-6" style="box-shadow:0 2px 12px rgba(139,92,246,0.07)">
+                        <h2 class="text-sm font-bold text-gray-700 mb-5">Original Price</h2>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                            <input type="number" name="original_price" step="0.01" placeholder="0.00"
+                                class="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 focus:bg-white" />
+                            @error('original_price')
+                                <p class="text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                         <h2 class="text-sm font-bold text-gray-700 mb-5">Price</h2>
                         <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                             <input type="number" name="price" step="0.01" placeholder="0.00"
                                 class="w-full pl-8 pr-4 py-2.5 rounded-xl text-sm border border-purple-100 bg-purple-50/30 focus:outline-none focus:border-purple-400 focus:bg-white" />
                             @error('price')
@@ -122,7 +131,8 @@
                                         <p class="text-red-600">{{ $message }}</p>
                                     @enderror
                                 </div>
-                                <button type="button" class="text-gray-400 hover:text-red-500" onclick="removeStock(this)">
+                                <button type="button" class="text-gray-400 hover:text-red-500"
+                                    onclick="removeStock(this)">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M6 18L18 6M6 6l12 12" />

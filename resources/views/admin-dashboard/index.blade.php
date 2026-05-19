@@ -1,11 +1,4 @@
-@php
-    use App\Models\User;
-    use App\Models\Product;
-    $users = User::all();
-    $products = Product::all();
-@endphp
-
-@extends('admin-dashboard..master')
+@extends('admin-dashboard.master')
 @section('title', 'Overview')
 
 @section('overview active', 'active')
@@ -29,7 +22,7 @@
                     {{-- <span class="badge-up">+15.3%</span> --}}
                 </div>
                 <p class="text-xs text-gray-400 font-medium mb-1">Total Users</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $users->count() }}</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $usersCount }}</p>
             </div>
 
             <div class="stat-card bg-white rounded-2xl p-4 sm:p-5 fade-up d2">
@@ -43,7 +36,7 @@
                     {{-- <span class="badge-up">+8.7%</span> --}}
                 </div>
                 <p class="text-xs text-gray-400 font-medium mb-1">Total Products</p>
-                <p class="text-2xl font-bold text-gray-800">{{ $products->count() }}</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $productsCount }}</p>
             </div>
 
             <div class="stat-card bg-white rounded-2xl p-4 sm:p-5 fade-up d3">
@@ -57,7 +50,7 @@
                     {{-- <span class="badge-up">+12.1%</span> --}}
                 </div>
                 <p class="text-xs text-gray-400 font-medium mb-1">Total Orders</p>
-                <p class="text-2xl font-bold text-gray-800">4565</p>
+                <p class="text-2xl font-bold text-gray-800">{{ $ordersCount }}</p>
             </div>
 
             <div class="stat-card bg-white rounded-2xl p-4 sm:p-5 fade-up d4">
@@ -71,7 +64,7 @@
                     {{-- <span class="badge-up">+18.4%</span> --}}
                 </div>
                 <p class="text-xs text-gray-400 font-medium mb-1">Revenue</p>
-                <p class="text-2xl font-bold text-gray-800">₹8,45,678</p>
+                <p class="text-2xl font-bold text-gray-800">${{ $totalRevenue }}</p>
             </div>
         </div>
 
@@ -82,11 +75,12 @@
             <div class="bg-white rounded-2xl p-4 sm:p-6 fade-up d5">
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
                     <h2 class="text-sm sm:text-base font-bold text-gray-800">Sales Overview</h2>
-                    <select
-                        class="text-xs text-gray-500 border border-gray-100 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:border-purple-300">
-                        <option>Last 7 months</option>
-                        <option>Last 30 days</option>
-                        <option>This year</option>
+                    <select id="salesRangeFilter"
+                        class="text-xs text-gray-500 border border-gray-100 rounded-lg px-2 py-1.5 bg-gray-50 focus:outline-none focus:border-purple-300"
+                        onchange="const range = this.value; window.location.href = `{{ route('admin-dashboard.index') }}?range=${range}`">
+                        <option value="30days" {{ request('range') == '30days' ? 'selected' : '' }}>Last 30 days</option>
+                        <option value="7months" {{ request('range') == '7months' ? 'selected' : '' }}>Last 7 months</option>
+                        <option value="year" {{ request('range') == 'year' ? 'selected' : '' }}>This year</option>
                     </select>
                 </div>
                 <div class="chart-container">
@@ -101,32 +95,31 @@
                     <div class="flex-shrink-0" style="width:160px;height:160px">
                         <canvas id="categoryChart"></canvas>
                     </div>
+                    @php
+                        $colors = [
+                            '#7C3AED', // purple
+                            '#EC4899', // pink
+                            '#F59E0B', // orange
+                            '#10B981', // green
+                            '#3B82F6', // blue
+                            '#EF4444', // red
+                            '#14B8A6', // teal
+                        ];
+                    @endphp
+
                     <div class="flex flex-col gap-2.5 flex-1 w-full">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2"><span class="category-dot"
-                                    style="background:#7C3AED"></span><span class="text-xs text-gray-600">Women
-                                    Fashion</span></div><span class="text-xs font-bold text-gray-800">35%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2"><span class="category-dot"
-                                    style="background:#EC4899"></span><span class="text-xs text-gray-600">Men
-                                    Fashion</span></div><span class="text-xs font-bold text-gray-800">25%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2"><span class="category-dot"
-                                    style="background:#F59E0B"></span><span class="text-xs text-gray-600">Electronics</span>
-                            </div><span class="text-xs font-bold text-gray-800">18%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2"><span class="category-dot"
-                                    style="background:#10B981"></span><span class="text-xs text-gray-600">Home &
-                                    Kitchen</span></div><span class="text-xs font-bold text-gray-800">14%</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2"><span class="category-dot"
-                                    style="background:#E5E7EB"></span><span class="text-xs text-gray-600">Others</span>
-                            </div><span class="text-xs font-bold text-gray-800">8%</span>
-                        </div>
+                        @foreach ($categoryLabels as $i => $label)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="category-dot" style="background: {{ $categoryColors[$i] }}"></span>
+                                    <span class="text-xs text-gray-600">{{ $label }}</span>
+                                </div>
+
+                                <span class="text-xs font-bold text-gray-800">
+                                    %{{ $categoryData[$i] }}
+                                </span>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -136,8 +129,9 @@
         <div class="bg-white rounded-2xl p-4 sm:p-6 fade-up">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-sm sm:text-base font-bold text-gray-800">Recent Orders</h2>
-                <button class="text-xs text-purple-600 font-semibold hover:text-purple-800 transition-colors">View
-                    All →</button>
+                <a href="{{ route('admin-dashboard.orders.index') }}"
+                    class="text-xs text-purple-600 font-semibold hover:text-purple-800 transition-colors">View
+                    All →</a>
             </div>
             <div class="table-wrap -mx-1 px-1">
                 <table class="w-full text-sm min-w-[480px]">
@@ -151,51 +145,36 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
-                        <tr class="hover:bg-purple-50/30 transition-colors">
-                            <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">#SK-8821</td>
-                            <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">Priya Sharma</td>
-                            <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">Women Fashion</td>
-                            <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">₹2,340</td>
-                            <td class="py-3"><span
-                                    class="bg-green-50 text-green-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">Delivered</span>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-purple-50/30 transition-colors">
-                            <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">#SK-8820</td>
-                            <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">Rahul Mehta</td>
-                            <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">Electronics</td>
-                            <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">₹15,999</td>
-                            <td class="py-3"><span
-                                    class="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">Shipped</span>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-purple-50/30 transition-colors">
-                            <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">#SK-8819</td>
-                            <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">Anjali Singh</td>
-                            <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">Beauty & Health</td>
-                            <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">₹870</td>
-                            <td class="py-3"><span
-                                    class="bg-yellow-50 text-yellow-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">Processing</span>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-purple-50/30 transition-colors">
-                            <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">#SK-8818</td>
-                            <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">Vikram Nair</td>
-                            <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">Home & Kitchen</td>
-                            <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">₹5,450</td>
-                            <td class="py-3"><span
-                                    class="bg-green-50 text-green-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">Delivered</span>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-purple-50/30 transition-colors">
-                            <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">#SK-8817</td>
-                            <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">Meena Gupta</td>
-                            <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">Kids</td>
-                            <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">₹1,200</td>
-                            <td class="py-3"><span
-                                    class="bg-red-50 text-red-500 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">Cancelled</span>
-                            </td>
-                        </tr>
+                        @if (count($orders))
+                            @foreach ($orders as $order)
+                                <tr class="hover:bg-purple-50/30 transition-colors">
+                                    <td class="py-3 pr-4 text-gray-500 font-mono text-xs whitespace-nowrap">
+                                        {{ $order->order_number }}</td>
+                                    <td class="py-3 pr-4 font-medium text-gray-700 whitespace-nowrap">
+                                        {{ $order->user->name }}</td>
+                                    <td class="py-3 pr-4 text-gray-500 hidden sm:table-cell">
+                                        {{ $order->items->first()->product->category->name ?? 'N/A' }}
+                                    </td>
+                                    <td class="py-3 pr-4 font-semibold text-gray-800 whitespace-nowrap">{{ $order->total }}
+                                    </td>
+                                    <td class="py-3">
+                                        @php
+                                            $statusColor = match ($order->status) {
+                                                'confirmed' => 'bg-blue-50 text-blue-600',
+                                                'shipped' => 'bg-indigo-50 text-indigo-600',
+                                                'delivered' => 'bg-green-50 text-green-600',
+                                                'cancelled' => 'bg-red-50 text-red-500',
+                                                default => 'bg-yellow-50 text-yellow-600',
+                                            };
+                                        @endphp
+                                        <span
+                                            class="{{ $statusColor }} text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap">
+                                            {{ ucfirst($order->status) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -203,3 +182,100 @@
 
     </main>
 @endsection
+
+@push('scripts')
+    <script>
+        // ── Sales Chart ────────────────────────────────────────
+        const salesLabels = @json($salesLabels);
+        const salesData = @json($salesData);
+
+        new Chart(document.getElementById('salesChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: salesLabels,
+                datasets: [{
+                    data: salesData,
+                    borderColor: '#8B5CF6',
+                    backgroundColor: 'rgba(139,92,246,0.08)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#8B5CF6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            },
+                            color: '#9CA3AF'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#F3F4F6'
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            },
+                            color: '#9CA3AF',
+                            callback: v => v >= 1000 ? (v / 1000) + 'k' : v
+                        },
+                        border: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // ── Category Chart (Dynamic) ─────────────────────────
+        const categoryLabels = @json($categoryLabels);
+        const categoryData = @json($categoryData);
+        const categoryColors = @json($categoryColors);
+
+        new Chart(document.getElementById('categoryChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: categoryColors,
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.label}: ${ctx.parsed}%`
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+@endpush

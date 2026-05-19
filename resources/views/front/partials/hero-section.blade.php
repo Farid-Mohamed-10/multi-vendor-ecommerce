@@ -30,10 +30,10 @@
                     </div>
                 </div>
 
-                <h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Coming Soon!</h2>
-                <p class="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
-                    We're preparing something amazing for you. Our collection is being curated with the best products to
-                    bring you an exceptional shopping experience.
+                <h2 class="text-4xl sm:text-6xl font-black text-gray-900 mb-6 tracking-tight">Coming Soon</h2>
+                <p class="text-lg sm:text-xl text-gray-500 mb-10 leading-relaxed font-medium">
+                    We're preparing something extraordinary. Our collection is being curated with the finest products to
+                    redefine your shopping experience.
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -84,68 +84,50 @@
                         </div>
 
                         <!-- Dark Overlay -->
-                        <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
 
                         <!-- Text Content -->
-                        <div class="absolute inset-0 flex flex-col justify-center px-6 sm:px-8 lg:px-12 max-w-2xl">
-                            <div class="space-y-6">
-                                <div>
-                                    <p class="text-sm font-semibold text-purple-300 uppercase tracking-wide mb-2">
-                                        Featured
-                                        Product</p>
+                        <div class="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 lg:px-20 max-w-4xl">
+                            <div class="space-y-8" x-show="currentSlide === {{ $index }}"
+                                x-transition:enter="transition ease-out duration-700 delay-300"
+                                x-transition:enter-start="opacity-0 translate-y-8"
+                                x-transition:enter-end="opacity-100 translate-y-0">
+
+                                <div class="space-y-4">
+                                    <p
+                                        class="text-indigo-400 font-bold uppercase tracking-[0.2em] text-xs sm:text-sm animate-pulse">
+                                        Exclusive Selection
+                                    </p>
                                     <h2
-                                        class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 leading-tight drop-shadow-lg">
+                                        class="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.1] tracking-tight">
                                         {{ $product->name }}
                                     </h2>
-                                    <p
-                                        class="text-gray-100 text-base sm:text-lg leading-relaxed max-w-md drop-shadow-md">
-                                        {{ Str::limit($product->description ?? 'Discover this amazing product', 150) }}
+                                    <p class="text-gray-300 text-lg sm:text-xl leading-relaxed max-w-xl font-medium">
+                                        {{ Str::limit($product->description ?? 'Discover this amazing product', 120) }}
                                     </p>
                                 </div>
 
-                                <!-- Price and Rating -->
-                                <div class="flex items-center gap-4">
-                                    <div>
-                                        <p class="text-sm text-gray-200 font-medium">Price</p>
-                                        <p class="text-3xl font-bold text-white drop-shadow-lg">
-                                            ₹{{ number_format($product->price, 2) }}</p>
-                                    </div>
-                                    @if ($product->discount_price)
-                                        <div>
-                                            <p class="text-sm text-gray-200 font-medium">Regular</p>
-                                            <p class="text-xl font-semibold text-gray-300 line-through drop-shadow-md">
-                                                ₹{{ number_format($product->discount_price, 2) }}</p>
+                                <!-- Price and Action -->
+                                <div class="flex flex-wrap items-center gap-8">
+                                    <div class="space-y-1">
+                                        <p class="text-gray-400 text-xs uppercase font-bold tracking-widest">Price
+                                            Starting At</p>
+                                        <div class="flex items-baseline gap-2">
+                                            <span
+                                                class="text-4xl sm:text-5xl font-black text-white">${{ number_format($product->price, 2) }}</span>
+                                            @if ($product->discount_price)
+                                                <span
+                                                    class="text-xl text-gray-500 line-through font-bold">${{ number_format($product->discount_price, 2) }}</span>
+                                            @endif
                                         </div>
-                                    @endif
-                                </div>
+                                    </div>
 
-                                <!-- Stock Status -->
-                                <div class="flex items-center gap-3">
-                                    @if ($product->in_stock ?? true)
-                                        <span
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/90 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd"
-                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            In Stock
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center gap-2 px-4 py-2 bg-red-500/90 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                                            Out of Stock
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <!-- CTA Button -->
-                                <div class="flex gap-3 pt-4">
-                                    <a href="#"
-                                        class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm">
-                                        View Product
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    <a href="{{ route('front.show-product', $product) }}"
+                                        class="inline-flex items-center gap-3 px-10 py-4 bg-white hover:bg-indigo-600 text-black hover:text-white font-black rounded-2xl transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.2)] hover:shadow-indigo-500/40 group uppercase text-sm tracking-wider">
+                                        Explre Now
+                                        <svg class="w-5 h-5 group-hover:translate-x-2 transition-transform"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
                                                 d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                         </svg>
                                     </a>

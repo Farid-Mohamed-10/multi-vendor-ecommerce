@@ -39,6 +39,11 @@ class Product extends Model
         return $this->hasMany(Stock::class);
     }
 
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     public function stockFor(string $size, string $color)
     {
         return $this->stocks()
